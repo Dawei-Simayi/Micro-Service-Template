@@ -1,14 +1,14 @@
 package com.example.kafkasdk.client;
 
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.example.common.response.Response;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.DeleteTopicsResult;
-import org.apache.kafka.clients.admin.ListTopicsResult;
+import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +29,10 @@ public class Producer {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootStrapServer;
 
+    @Autowired
+    @Qualifier("kafkaAdminClient")
+    private AdminClient adminClient;
+
     @PostMapping("/message/send")
     public String produce(@RequestParam("topic") String topic,
                         @RequestParam("message") String message) {
@@ -38,27 +42,24 @@ public class Producer {
     }
 
     @PostMapping("/topic/delete")
-    public String deleteTopic(@RequestParam("topicName") String topicName) {
-        AdminClient adminClient = getKafkaClient();
+    public Response deleteTopic(@RequestParam("topicName") String topicName) {
         DeleteTopicsResult result = adminClient.deleteTopics(Arrays.asList(topicName));
-        return result.toString();
+        return Response.success(result.toString());
     }
 
+    @PostMapping("/topic/create")
+    public Response createTopic(@RequestParam("topicName") String topicName) {
+        NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
+        CreateTopicsResult result = adminClient.createTopics(Arrays.asList(newTopic));
+        return Response.success("create success");
+    }
     @GetMapping("/topic/list")
     public Response listTopics() throws ExecutionException, InterruptedException {
-        AdminClient kafkaClient = getKafkaClient();
-        ListTopicsResult topicsResult = kafkaClient.listTopics();
+        ListTopicsResult topicsResult = adminClient.listTopics();
         KafkaFuture<Set<String>> names = topicsResult.names();
         String[] result = names.get().stream().toArray(String[]::new);
-        String s = JSONObject.from(result).toString();
+        String s = JSONObject.toJSONString(result);
         return Response.success(s);
-    }
-
-    public AdminClient getKafkaClient() {
-        Properties properties = new Properties();
-        properties.put("bootstrap.servers", bootStrapServer);
-        AdminClient adminClient = AdminClient.create(properties);
-        return adminClient;
     }
 
 }
