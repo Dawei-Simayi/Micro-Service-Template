@@ -1,8 +1,7 @@
 package com.example.kafkasdk.client;
 
-import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
-import com.example.common.response.Response;
+import com.example.common.response.ResponseResult;
 import org.apache.kafka.clients.admin.*;
 import org.apache.kafka.common.KafkaFuture;
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -42,24 +40,24 @@ public class Producer {
     }
 
     @PostMapping("/topic/delete")
-    public Response deleteTopic(@RequestParam("topicName") String topicName) {
+    public ResponseResult deleteTopic(@RequestParam("topicName") String topicName) {
         DeleteTopicsResult result = adminClient.deleteTopics(Arrays.asList(topicName));
-        return Response.success(result.toString());
+        return ResponseResult.success(result.toString());
     }
 
     @PostMapping("/topic/create")
-    public Response createTopic(@RequestParam("topicName") String topicName) {
+    public ResponseResult createTopic(@RequestParam("topicName") String topicName) {
         NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
         CreateTopicsResult result = adminClient.createTopics(Arrays.asList(newTopic));
-        return Response.success("create success");
+        return ResponseResult.success("create success");
     }
-    @GetMapping("/topic/list")
-    public Response listTopics() throws ExecutionException, InterruptedException {
+    @PostMapping("/topic/list")
+    public ResponseResult listTopics() throws ExecutionException, InterruptedException {
         ListTopicsResult topicsResult = adminClient.listTopics();
         KafkaFuture<Set<String>> names = topicsResult.names();
         String[] result = names.get().stream().toArray(String[]::new);
         String s = JSONObject.toJSONString(result);
-        return Response.success(s);
+        return ResponseResult.success(s);
     }
 
 }
