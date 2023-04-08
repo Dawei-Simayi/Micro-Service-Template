@@ -2,7 +2,9 @@ package com.example.kafkasdk.client;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.example.common.response.ResponseResult;
+import io.swagger.annotations.Api;
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.KafkaFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/kafka")
+@Api(value = "KafkaApi", tags = "KafkaApi")
 public class Producer {
     private static Logger logger = LoggerFactory.getLogger(Producer.class);
     @Autowired
@@ -27,6 +30,8 @@ public class Producer {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootStrapServer;
 
+    @Autowired
+    private KafkaProducer kafkaProducer;
     @Autowired
     @Qualifier("kafkaAdminClient")
     private AdminClient adminClient;
